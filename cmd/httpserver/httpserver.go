@@ -43,6 +43,7 @@ func (s Server) Serve() {
 	e.Use(middleware.Recover())
 	gameGroup := e.Group("/api/v1")
 	gameGroup.POST("/games", gameHandler.CreateGame)
+	gameGroup.GET("/games/:game_id", gameHandler.GetGame)
 
 	e.GET("/health", s.healthCheck)
 
