@@ -1,0 +1,37 @@
+name: Bug Report
+description: Report a bug in the service
+title: "[Bug] <short description>"
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "## 🐛 Bug Report\nA clear and concise description of the problem."
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      placeholder: "e.g. The <endpoint> returns 500 when sending a valid payload."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to reproduce
+      placeholder: |
+        1. Call the API: `curl -X POST http://localhost:8080/<endpoint> -d '{...}'`
+        2. Observe: <describe the error>
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "e.g. The endpoint should return 200 OK with the expected data."
+  - type: input
+    id: version
+    attributes:
+      label: Version/Branch
+      placeholder: "e.g. main, v1.0.0, commit hash..."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: "e.g. Go 1.23, macOS 14.4, Docker, etc."
