@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"playwithagent-xo/internal/game"
-	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -14,48 +13,47 @@ import (
 
 var ErrNotFound = errors.New("resource not found") 
 
+const redisGameIDCounterKey = "next_game_id"
 
 
 type RedisGameRepository struct {
 	rdb *redis.Client
-	idMutex *sync.Mutex
-	nextGameID int
 }
 
 func NewRedisGameRepository(rdb *redis.Client) *RedisGameRepository {
 	return &RedisGameRepository{
 		rdb: rdb,
-		idMutex: &sync.Mutex{},
-		nextGameID: 1,
 	}
 }
 
-func (r *RedisGameRepository) GetNextGameID() int {
-	r.idMutex.Lock()
-	defer r.idMutex.Unlock()
+// func (r *RedisGameRepository) GetNextGameID() int {
+// 	r.idMutex.Lock()
+// 	defer r.idMutex.Unlock()
 
-	nextID := r.nextGameID
-	r.nextGameID++
-	return nextID
-}
+// 	nextID := r.nextGameID
+// 	r.nextGameID++
+// 	return nextID
+// }
 
 func (r *RedisGameRepository) SaveActiveGame(ctx context.Context, g *game.Game) (int, error) {
 
-	if g.ID == 0 {
-		g.ID = r.GetNextGameID()
-	}
+	genearatedGameID, err := r.rdb.Incr(ctx, redisGameIDCounterKey).Result()
 
-	gameID := g.ID
+	if err != nil {
+		return 0, fmt.Errorf("failed to generate next game ID from Redis: %w", err)
+	}
+	gameID := int(genearatedGameID)
+	g.ID = gameID
 
 	redisKey := fmt.Sprintf("game:%d", gameID)
 	gameJSON, err := json.Marshal(g)
 	if err != nil {
-		return 0, fmt.Errorf("failed to marshal game: %w", err)
+		return 0, fmt.Errorf("failed to marshal game with generated ID %d: %w", gameID, err)
 	}
 
 	err = r.rdb.Set(ctx, redisKey, gameJSON, time.Hour*1).Err()
 	if err != nil {
-		return 0, fmt.Errorf("failed to save game to Redis: %w", err)
+		return 0, fmt.Errorf("failed to save game %d to Redis: %w", gameID, err)
 	}
 	fmt.Printf("Stored game %d in Redis. Key: %s\n", gameID, redisKey)
 	return gameID, nil
