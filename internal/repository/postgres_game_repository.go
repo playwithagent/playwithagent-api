@@ -23,8 +23,9 @@ func (r *PostgresGameRepository) SaveCompletedGame(ctx context.Context, g *game.
 	if g == nil {
 		return errors.New("can not save nil game")
 	}
-	if g.GameStatus != game.GameInProgress {
-		return fmt.Errorf("cannot save game %d to completed table: game is still in progress", g.ID)
+	is_Completed := g.GameStatus == game.PlayerOWon || g.GameStatus == game.PlayerXWon || g.GameStatus == game.Draw
+	if !is_Completed {
+		return fmt.Errorf("cannot save game %d to completed table: game status is '%v', not a finished state", g.ID, g.GameStatus)
 	}
 	if g.EndTime.IsZero() {
 		return fmt.Errorf("cannot save game %d to completed table: EndTime is not set", g.ID)
@@ -52,9 +53,9 @@ func (r *PostgresGameRepository) SaveCompletedGame(ctx context.Context, g *game.
 	}
 
 	if commandTag.RowsAffected() == 0 {
-		return fmt.Errorf("no rows affected when saving game %d to completed table", g.ID)
+		fmt.Printf("Warning/Info: No rows affected when attempting to save completed game %d. May already exist.\n", g.ID)
 	} else {
-		fmt.Printf("Game %d saved to completed table successfully\n", g.ID)
+		fmt.Printf("Completed game %d saved to table successfully\n", g.ID)
 	}
 	
 	return nil
