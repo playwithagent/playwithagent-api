@@ -34,8 +34,9 @@ func (s Server) Serve() {
 	rdb := connectRedis(ctx)
 	defer rdb.Close()
 
-	gameRepo := repository.NewRedisGameRepository(rdb)
-	gameHandler := api.NewGameHandler(gameRepo)
+	gameActiveRepo := repository.NewRedisGameRepository(rdb)
+	gameCompletedRepo := repository.NewPostgresGameRepository(dbPool)
+	gameHandler := api.NewGameHandler(gameActiveRepo, gameCompletedRepo)
 
 	e := echo.New()
 
@@ -44,6 +45,7 @@ func (s Server) Serve() {
 	gameGroup := e.Group("/api/v1")
 	gameGroup.POST("/games", gameHandler.CreateGame)
 	gameGroup.GET("/games/:game_id", gameHandler.GetGame)
+	gameGroup.POST("/games/:game_id/move", gameHandler.MakeMoveHandler)
 
 	e.GET("/health", s.healthCheck)
 

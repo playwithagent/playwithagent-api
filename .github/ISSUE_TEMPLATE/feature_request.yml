@@ -1,0 +1,25 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature] <short summary>"
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: "## ✨ Feature Request\nDescribe the new functionality or improvement."
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      placeholder: "e.g. Add a /status endpoint to monitor service health"
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Why is this needed?
+      placeholder: "e.g. This would allow uptime monitoring and improve observability."
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      placeholder: "e.g. Add a GET handler in status.go, register it in routes.go..."
