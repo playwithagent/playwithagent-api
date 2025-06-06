@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"playwithagent-xo/internal/game"
 	"sync"
@@ -10,6 +11,9 @@ import (
 
 	"github.com/go-redis/redis/v8"
 )
+
+var ErrNotFound = errors.New("resource not found") 
+
 
 
 type RedisGameRepository struct {
@@ -55,4 +59,22 @@ func (r *RedisGameRepository) SaveActiveGame(ctx context.Context, g *game.Game) 
 	}
 	fmt.Printf("Stored game %d in Redis. Key: %s\n", gameID, redisKey)
 	return gameID, nil
+}
+
+func (r *RedisGameRepository) GetActiveGame(ctx context.Context, gameID int) (*game.Game, error) {
+	redisKey := fmt.Sprintf("game:%d", gameID)
+	gameJSON, err := r.rdb.Get(ctx, redisKey).Result()
+	if err != nil {
+		if err == redis.Nil{
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get game from Redis: %w", err)
+	}
+
+	var g game.Game
+	err = json.Unmarshal([]byte(gameJSON), &g)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal game: %w", err)
+	}
+	return &g, nil
 }
